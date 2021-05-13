@@ -1,0 +1,107 @@
+#!/usr/bin/env csh
+# csh radio machine       #
+# version 0.7             #
+# version teste           #
+# Kaloyan Krastev Krastev #
+# kaloyansen@gmail.com    #
+
+set radar = (\
+http://stream.bnr.bg:8002/horizont.mp3\
+http://stream.bnr.bg:8002/botev.mp3\
+http://lb-hls.cdn.bg/2032/fls/HrBotev.stream/playlist.m3u8\
+http://broadcast.infomaniak.ch/beurfm-high.mp3\
+http://bfmbusiness.cdn.dvmr.fr/bfmbusiness\
+http://live.campusgrenoble.org:9000/rcg112\
+http://direct.franceinter.fr/live/franceinter-midfi.mp3\
+http://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3\
+http://live02.rfi.fr/rfimonde-96k.mp3\
+http://live02.rfi.fr/rfimusiquemonde-96k.mp3\
+)
+
+set aide = 0      # trigger help
+set liste = 0     # trigger liste radio
+set hasard = 0    # trigger random station
+set radix = 5     # radio station list index
+set retry = 1     # rerun number
+
+set logfile = /tmp/horizont.log
+set logfile = /dev/null
+
+set escarbot = 1  # debug on
+set escarbot = 0  # debug off
+set mecho = "/usr/bin/echo -e" # local output
+set vecho = "$mecho \c"      # verbose output
+if $escarbot set vecho = "$mecho"
+
+$vecho "dollardiez = $#"
+
+if ( $# > 2 ) then
+    set aide = 1
+    set liste = 1
+endif
+
+if ( $# > 1 ) set retry = $2
+
+if ( $# > 0 ) then
+    set st = `echo $1 | tr -d -` # traiter l'argument premier sans des tirés; get rid of the dashes
+    if ( $st == 'h' || $st == 'help' ) set aide = 1
+    if ( $st == 'l' || $st == 'list' ) set liste = 1
+    set radix = $1
+else
+    set hasard = 1
+endif
+
+if $aide then
+    echo
+    echo ========================== c-shell radio machine ===============================
+    echo ========================== kaloyansen@gmail.com  ===============================
+    echo ================================= usage ========================================
+    echo $0 index = $radix retry = $retry
+    echo $0 h, help -- voir aide et usage
+    echo $0 l, list -- voir la liste des stations radio
+    echo $0 sans option jouer une station radio au hasard
+    echo ================================================================================
+    echo
+endif
+
+if $liste then
+    $mecho "\vindex et adresse des stations radio:\v"
+    set j = 0
+    foreach i ($radar)
+        @ j++
+        echo "$j $i"
+    end
+    echo
+endif
+    
+if $aide exit(0)
+if $liste exit(0)
+
+#### programme execution ###################################
+set loop = 0
+while ( $loop < $retry )
+    @ loop++
+
+    $vecho "hasard = $hasard"
+
+    if $hasard set radix = `/usr/bin/shuf -n 1 -i 1-$#radar`
+
+    $vecho "radix = $radix"
+
+    set radio = $radar[$radix]
+
+    $mecho "$radio"
+
+    if $escarbot exit(0)
+
+    echo ""
+    echo "$radix $radio $retry fois"
+    echo "=*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= loop $loop/$retry =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*="
+    /usr/bin/date
+    /usr/bin/time /usr/bin/mplayer -cache 321 $radio
+end
+
+$mecho "\v=*= =*=  le programme $0 terminé après $loop loops  =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*=\v"
+
+exit(0)
+
